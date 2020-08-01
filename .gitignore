@@ -2,3 +2,4 @@
 !all-rso-sample.csv
 env-data-cleaning/
 .vscode/
+/__pycache__/
