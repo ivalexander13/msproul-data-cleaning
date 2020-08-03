@@ -43,13 +43,13 @@ cols
 # How many missing values are there per column?
 
 # %%
-counts_blank = [copy1[col].isna().sum() for col in cols]
+counts_blank = [copy1[col].notnull().sum() for col in cols]
 
 plt.figure(figsize=(8,9));
 plt.barh(width=counts_blank, y=cols);
 plt.xlim(0, len(copy1));
 plt.yticks(cols)
-plt.title("Number of NaN's in the original data.");
+plt.title("Number of non-NaN's in the original data.");
 
 # %% [markdown]
 # ## Per Column Cleaning
@@ -278,7 +278,7 @@ def cleanup_start_date(df):
 
 cleanup_fn.add(cleanup_start_date)
 
-cleanup_start_date(copy2).start_date.dropna().value_counts()
+cleanup_start_date(copy2).start_date.dropna()
 
 # %% [markdown]
 # Just for fun!
@@ -287,7 +287,7 @@ cleanup_start_date(copy2).start_date.dropna().value_counts()
 year_df = cleanup_start_date(copy2).start_date.dropna().value_counts().sort_index()
 plt.plot(year_df.index, year_df);
 plt.yticks(range(0, max(year_df) + 1, 10))
-plt.title("Number of RSO registrations by Year.\n(Only 1/3 accounted for)");
+plt.title("Number of RSO registrations by Year.\n(Only 2/3 accounted for)");
 plt.ylabel("Number of RSOs");
 plt.xlabel("Year");
 
@@ -300,41 +300,6 @@ social_colnames
 
 # %% [markdown]
 # Based on manual inspection, there is no need for cleanup.
-# %% [markdown]
-# ## 9. Priv Phone
-
-# %%
-copy1.priv_phone
-
-
-# %%
-def clean_phone(val):
-    val = re.sub('[^0-9]', '', val)
-    val = re.sub(r'(\d{3})(\d{3})(\d{4})', r'(\1) \2-\3', val)
-    return val
-clean_phone('01sssa23wwda4ss56789|0"00')
-
-
-# %%
-copy2 = og_data.copy()
-def cleanup_priv_phone(df):
-    def return_valid(val):
-        if (
-            val is None 
-            or val is np.nan 
-            or len(val) == 0
-        ):
-            return np.nan
-        else: 
-            return clean_phone(val)
-
-    df.priv_phone = df.priv_phone.apply(return_valid, convert_dtype=True)
-    return df
-
-cleanup_fn.add(cleanup_priv_phone)
-
-#cleanup_priv_phone(copy2).priv_phone.dropna().value_counts()
-
 # %% [markdown]
 # # Closing
 # %% [markdown]
@@ -359,6 +324,24 @@ def cleanup_pipeline(df):
     for fn in cleanup_fn:
         df = fn(df)
     return df
+
+
+# %%
+# Save to csv
+cleanup_pipeline(og_data.copy()).to_csv(r'/home/ivalexander13/msproul-local/data-cleaning/processed_all_rso.csv', index=False)
+
+
+# %%
+# See the missing data graph again, post-processing.
+copy2 = cleanup_pipeline(og_data.copy())
+cols = copy2.columns.values
+counts_blank = [copy2[col].notnull().sum() for col in cols]
+
+plt.figure(figsize=(8,9));
+plt.barh(width=counts_blank, y=cols);
+plt.xlim(0, len(copy2));
+plt.yticks(cols)
+plt.title("Number of non-NaN's in the processed data.");
 
 
 # %%
