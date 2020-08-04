@@ -1,4 +1,5 @@
 *.csv
+*.png
 !all-rso-sample.csv
 env-data-cleaning/
 .vscode/
